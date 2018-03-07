@@ -113,6 +113,7 @@ func Provider() terraform.ResourceProvider {
 			"vault_policy":                              policyResource(),
 			"vault_mount":                               mountResource(),
 			"vault_pki_backend_role":                    pkiBackendRoleResource(),
+			"vault_audit":                               auditResource(),
 		},
 	}
 }
