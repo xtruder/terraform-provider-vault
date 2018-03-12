@@ -44,6 +44,11 @@ func genericSecretResource() *schema.Resource {
 				ValidateFunc: ValidateDataJSON,
 			},
 
+			"data": &schema.Schema{
+				Type:     schema.TypeMap,
+				Computed: true,
+			},
+
 			"allow_read": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -104,12 +109,18 @@ func genericSecretResourceWrite(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] Writing generic Vault secret to %s", path)
-	_, err = client.Logical().Write(path, data)
+	secret, err := client.Logical().Write(path, data)
 	if err != nil {
 		return fmt.Errorf("error writing to Vault: %s", err)
 	}
 
 	d.SetId(path)
+
+	if secret != nil {
+		log.Printf("[DEBUG] secret: %#v", secret)
+
+		d.Set("data", secret.Data)
+	}
 
 	return genericSecretResourceRead(d, meta)
 }
@@ -159,6 +170,7 @@ func genericSecretResourceRead(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("Error marshaling JSON for %q: %s", path, err)
 		}
 		d.Set("data_json", string(jsonDataBytes))
+		d.Set("data", secret.Data)
 		d.Set("path", path)
 	} else {
 		log.Printf("[WARN] vault_generic_secret does not refresh when disable_read is set to true")
